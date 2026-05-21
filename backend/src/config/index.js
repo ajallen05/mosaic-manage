@@ -13,6 +13,7 @@ export default {
 
   gemini: {
     apiKey: process.env.GOOGLE_GEMINI_API_KEY || '',
+    imageModel: process.env.GEMINI_IMAGE_MODEL || '',  // leave blank to use default in service
   },
 
   cors: {

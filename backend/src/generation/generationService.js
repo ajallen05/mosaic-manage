@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
 
 function getImageModel() {
   return genAI.getGenerativeModel(
-    { model: 'gemini-2.0-flash-preview-image-generation' },
+    { model: config.gemini.imageModel || 'gemini-2.0-flash-exp' },
     { apiVersion: 'v1alpha' }
   );
 }
