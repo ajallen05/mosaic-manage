@@ -13,7 +13,10 @@ export const editorService = {
       throw err;
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-preview-image-generation' });
+    const model = genAI.getGenerativeModel(
+      { model: 'gemini-2.0-flash-preview-image-generation' },
+      { apiVersion: 'v1alpha' }
+    );
 
     const response = await model.generateContent({
       contents: [{
