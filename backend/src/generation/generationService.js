@@ -11,6 +11,24 @@ function getImageModel() {
   });
 }
 
+// Turns raw Gemini failure messages into a single user-facing error.
+// Detects quota/rate-limit (429) so the cause is obvious instead of a generic 502.
+function buildGenerationError(messages) {
+  const joined = messages.join(' ');
+  if (/\b429\b|quota|too many requests/i.test(joined)) {
+    const err = new Error(
+      'Gemini quota exceeded for the image model. The Nano Banana image models ' +
+      'are not on the free tier — enable billing on your Google Cloud project, ' +
+      'or set GEMINI_IMAGE_MODEL to a model your plan allows.'
+    );
+    err.status = 429;
+    return err;
+  }
+  const err = new Error('Image generation failed: no images returned from Gemini');
+  err.status = 502;
+  return err;
+}
+
 export const generationService = {
   async generateImages({ userId, prompt, count = 4 }) {
     const safeCount = Math.min(Math.max(1, parseInt(count) || 1), 4);
@@ -25,10 +43,13 @@ export const generationService = {
 
     const responses = await Promise.allSettled(promises);
     const results = [];
+    const failures = [];
 
     for (const res of responses) {
       if (res.status === 'rejected') {
-        console.error('[generation] Image generation failed for one slot:', res.reason?.message);
+        const msg = res.reason?.message || String(res.reason);
+        console.error('[generation] Image generation failed for one slot:', msg);
+        failures.push(msg);
         continue;
       }
       const candidate = res.value.response.candidates?.[0];
@@ -52,9 +73,7 @@ export const generationService = {
     }
 
     if (results.length === 0) {
-      const err = new Error('Image generation failed: no images returned from Gemini');
-      err.status = 502;
-      throw err;
+      throw buildGenerationError(failures);
     }
     return results;
   },
@@ -67,10 +86,15 @@ export const generationService = {
       throw err;
     }
     const model = getImageModel();
-    const response = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
-    });
+    let response;
+    try {
+      response = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+      });
+    } catch (err) {
+      throw buildGenerationError([err?.message || String(err)]);
+    }
     const imagePart = response.response.candidates?.[0]?.content.parts.find(p => p.inlineData);
     if (!imagePart) {
       const err = new Error('Regeneration failed: no image returned');
