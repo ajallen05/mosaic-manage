@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "list-models": "node list-models.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
