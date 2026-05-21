@@ -13,10 +13,9 @@ export const editorService = {
       throw err;
     }
 
-    const model = genAI.getGenerativeModel(
-      { model: config.gemini.imageModel || 'gemini-2.0-flash-exp' },
-      { apiVersion: 'v1alpha' }
-    );
+    const model = genAI.getGenerativeModel({
+      model: config.gemini.imageModel || 'gemini-2.5-flash-image',
+    });
 
     const response = await model.generateContent({
       contents: [{

@@ -6,10 +6,9 @@ import { contentRepository } from '../repositories/contentRepository.js';
 const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
 
 function getImageModel() {
-  return genAI.getGenerativeModel(
-    { model: config.gemini.imageModel || 'gemini-2.0-flash-exp' },
-    { apiVersion: 'v1alpha' }
-  );
+  return genAI.getGenerativeModel({
+    model: config.gemini.imageModel || 'gemini-2.5-flash-image',
+  });
 }
 
 export const generationService = {
