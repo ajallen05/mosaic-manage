@@ -1,9 +1,8 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import config from '../config/index.js';
 import { contentRepository } from '../repositories/contentRepository.js';
 
-const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-const textModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+const TEXT_MODEL = 'meta-llama/Llama-3.2-3B-Instruct-Turbo';
+const API_URL = 'https://api.together.xyz/v1/chat/completions';
 
 const PLATFORM_GUIDANCE = {
   instagram: 'Instagram — casual, visual, personal tone; use 5–30 relevant hashtags; emojis encouraged.',
@@ -17,6 +16,28 @@ const TONE_MODIFIERS = {
   playful: 'Write in a witty, energetic, bold tone with creative wordplay.',
   inspirational: 'Write in an uplifting, motivational tone that inspires action.',
 };
+
+async function generateText(prompt) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.togetherAI.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: TEXT_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 512,
+      temperature: 0.7,
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`Together AI caption generation failed: ${detail}`);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content.trim();
+}
 
 export const captionsService = {
   async generateCaption({ userId, imageId, platform = 'default', tone = 'casual' }) {
@@ -40,8 +61,7 @@ Tone: ${toneGuide}
 Respond ONLY with valid JSON, no markdown fences, no explanation:
 {"caption":"<the post caption, 1-3 sentences>","hashtags":["<hashtag1>","<hashtag2>"],"characterCount":<number>}`;
 
-    const result = await textModel.generateContent(prompt);
-    const raw = result.response.text().trim();
+    const raw = await generateText(prompt);
 
     let parsed;
     try {

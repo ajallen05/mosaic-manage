@@ -8,8 +8,8 @@ from publishing.scheduler import init_scheduler
 async def startup_event():
     print(f"[mosaic-manage] Backend running on http://localhost:{config.port}")
     print(
-        f"[mosaic-manage] Gemini API key: "
-        f"{'set' if config.gemini_api_key else 'MISSING — set GOOGLE_GEMINI_API_KEY'}"
+        f"[mosaic-manage] Together AI key: "
+        f"{'set' if config.together_ai_api_key else 'MISSING — set TOGETHER_AI_API_KEY'}"
     )
     init_scheduler()
 

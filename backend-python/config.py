@@ -7,7 +7,7 @@ load_dotenv()
 class Config:
     port: int = int(os.getenv("PORT", "3001"))
     node_env: str = os.getenv("NODE_ENV", "development")
-    gemini_api_key: str = os.getenv("GOOGLE_GEMINI_API_KEY", "")
+    together_ai_api_key: str = os.getenv("TOGETHER_AI_API_KEY", "")
     cors_origins: list = [
         s.strip()
         for s in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")

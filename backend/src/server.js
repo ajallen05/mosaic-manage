@@ -4,8 +4,7 @@ import { initScheduler } from './publishing/scheduler.js';
 
 const server = app.listen(config.port, () => {
   console.log(`[mosaic-manage] Backend running on http://localhost:${config.port}`);
-  console.log(`[mosaic-manage] Auth mode: ${config.auth.mode}`);
-  console.log(`[mosaic-manage] Gemini API key: ${config.gemini.apiKey ? 'set' : 'MISSING — set GOOGLE_GEMINI_API_KEY'}`);
+  console.log(`[mosaic-manage] Together AI key: ${config.togetherAI.apiKey ? 'set' : 'MISSING — set TOGETHER_AI_API_KEY'}`);
   initScheduler();
 });
 
