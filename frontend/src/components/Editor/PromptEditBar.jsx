@@ -26,14 +26,14 @@ export default function PromptEditBar({ onImageUpdated }) {
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">Edit with AI prompt</label>
+      <label className="block text-sm font-medium text-gray-700">Regenerate with AI prompt</label>
       <div className="flex gap-2">
         <input
           type="text"
           value={editPrompt}
           onChange={e => setEditPrompt(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleApply()}
-          placeholder='e.g. "Add a sunset sky background" or "Make it look more cinematic"'
+          placeholder='e.g. "at night with neon lighting" or "more cinematic, dramatic sky"'
           className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
         />
         <button
@@ -42,9 +42,12 @@ export default function PromptEditBar({ onImageUpdated }) {
           className="flex items-center gap-1.5 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium px-4 py-2.5 rounded-lg text-sm transition"
         >
           {loading ? <Loader2 size={14} className="spin-slow" /> : <Wand2 size={14} />}
-          Apply
+          {loading ? 'Working' : 'Regenerate'}
         </button>
       </div>
+      <p className="text-xs text-gray-400">
+        Creates a new image from the original prompt plus your instruction.
+      </p>
       {error && (
         <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-1.5">
           {error}

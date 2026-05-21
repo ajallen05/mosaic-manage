@@ -1,10 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import config from '../config/index.js';
 import { contentRepository } from '../repositories/contentRepository.js';
-
-const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+import { getImageProvider } from '../generation/imageProvider.js';
+import { buildGenerationError } from '../generation/generationService.js';
 
 export const editorService = {
+  // Free image providers are text-to-image only — no true image editing.
+  // "Prompt edit" re-generates a fresh image, combining the original prompt
+  // with the edit instruction so the new version keeps the original context.
   async promptEdit({ userId, imageId, editPrompt }) {
     const record = contentRepository.findById(imageId);
     if (!record || record.userId !== userId) {
@@ -13,26 +14,13 @@ export const editorService = {
       throw err;
     }
 
-    const model = genAI.getGenerativeModel({
-      model: config.gemini.imageModel || 'gemini-2.5-flash-image',
-    });
+    const combinedPrompt = record.prompt ? `${record.prompt}. ${editPrompt}` : editPrompt;
 
-    const response = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [
-          { inlineData: { mimeType: record.mimeType, data: record.base64 } },
-          { text: editPrompt },
-        ],
-      }],
-      generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
-    });
-
-    const imagePart = response.response.candidates?.[0]?.content.parts.find(p => p.inlineData);
-    if (!imagePart) {
-      const err = new Error('Prompt edit failed: no image returned');
-      err.status = 502;
-      throw err;
+    let image;
+    try {
+      image = await getImageProvider().generateImage(combinedPrompt);
+    } catch (err) {
+      throw buildGenerationError([err]);
     }
 
     const editHistoryEntry = {
@@ -42,8 +30,9 @@ export const editorService = {
     };
 
     const updated = contentRepository.update(imageId, {
-      base64: imagePart.inlineData.data,
-      mimeType: imagePart.inlineData.mimeType || 'image/png',
+      base64: image.base64,
+      mimeType: image.mimeType,
+      prompt: combinedPrompt,
       editHistory: [...(record.editHistory || []), editHistoryEntry],
     });
 

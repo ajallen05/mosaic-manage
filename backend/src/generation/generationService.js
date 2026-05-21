@@ -1,30 +1,31 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { v4 as uuidv4 } from 'uuid';
-import config from '../config/index.js';
 import { contentRepository } from '../repositories/contentRepository.js';
+import { getImageProvider } from './imageProvider.js';
 
-const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+// Collapses one or more provider failures into a single user-facing error.
+// Detects quota/rate-limit (429) for a friendly message; otherwise surfaces
+// the provider's own message and status so the real cause is visible.
+export function buildGenerationError(errors) {
+  const items = errors.map(e => (typeof e === 'string' ? { message: e } : (e || {})));
+  const joined = items.map(e => e.message || '').join(' ');
 
-function getImageModel() {
-  return genAI.getGenerativeModel({
-    model: config.gemini.imageModel || 'gemini-2.5-flash-image',
-  });
-}
-
-// Turns raw Gemini failure messages into a single user-facing error.
-// Detects quota/rate-limit (429) so the cause is obvious instead of a generic 502.
-function buildGenerationError(messages) {
-  const joined = messages.join(' ');
   if (/\b429\b|quota|too many requests/i.test(joined)) {
     const err = new Error(
-      'Gemini quota exceeded for the image model. The Nano Banana image models ' +
-      'are not on the free tier — enable billing on your Google Cloud project, ' +
-      'or set GEMINI_IMAGE_MODEL to a model your plan allows.'
+      'Image generation rate/quota limit reached. Wait a moment and retry, ' +
+      'or check your provider plan (free tiers are rate-limited).'
     );
     err.status = 429;
     return err;
   }
-  const err = new Error('Image generation failed: no images returned from Gemini');
+
+  const first = items[0];
+  if (first?.message) {
+    const err = new Error(first.message);
+    err.status = first.status || 502;
+    return err;
+  }
+
+  const err = new Error('Image generation failed: no image returned from the provider');
   err.status = 502;
   return err;
 }
@@ -32,44 +33,30 @@ function buildGenerationError(messages) {
 export const generationService = {
   async generateImages({ userId, prompt, count = 4 }) {
     const safeCount = Math.min(Math.max(1, parseInt(count) || 1), 4);
-    const model = getImageModel();
+    const provider = getImageProvider();
 
-    const promises = Array.from({ length: safeCount }, () =>
-      model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
-      })
+    const responses = await Promise.allSettled(
+      Array.from({ length: safeCount }, () => provider.generateImage(prompt))
     );
 
-    const responses = await Promise.allSettled(promises);
     const results = [];
     const failures = [];
 
     for (const res of responses) {
       if (res.status === 'rejected') {
-        const msg = res.reason?.message || String(res.reason);
-        console.error('[generation] Image generation failed for one slot:', msg);
-        failures.push(msg);
+        console.error('[generation] Image generation failed for one slot:', res.reason?.message || res.reason);
+        failures.push(res.reason);
         continue;
       }
-      const candidate = res.value.response.candidates?.[0];
-      if (!candidate) continue;
-      const imagePart = candidate.content.parts.find(p => p.inlineData);
-      if (!imagePart) continue;
-
+      const { base64, mimeType } = res.value;
       const record = contentRepository.create({
         id: uuidv4(),
         userId,
         prompt,
-        base64: imagePart.inlineData.data,
-        mimeType: imagePart.inlineData.mimeType || 'image/png',
+        base64,
+        mimeType,
       });
-      results.push({
-        id: record.id,
-        base64: record.base64,
-        mimeType: record.mimeType,
-        prompt,
-      });
+      results.push({ id: record.id, base64: record.base64, mimeType: record.mimeType, prompt });
     }
 
     if (results.length === 0) {
@@ -85,25 +72,17 @@ export const generationService = {
       err.status = 404;
       throw err;
     }
-    const model = getImageModel();
-    let response;
+
+    let image;
     try {
-      response = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
-      });
+      image = await getImageProvider().generateImage(prompt);
     } catch (err) {
-      throw buildGenerationError([err?.message || String(err)]);
+      throw buildGenerationError([err]);
     }
-    const imagePart = response.response.candidates?.[0]?.content.parts.find(p => p.inlineData);
-    if (!imagePart) {
-      const err = new Error('Regeneration failed: no image returned');
-      err.status = 502;
-      throw err;
-    }
+
     const updated = contentRepository.update(imageId, {
-      base64: imagePart.inlineData.data,
-      mimeType: imagePart.inlineData.mimeType || 'image/png',
+      base64: image.base64,
+      mimeType: image.mimeType,
       prompt,
     });
     return { id: updated.id, base64: updated.base64, mimeType: updated.mimeType, prompt };

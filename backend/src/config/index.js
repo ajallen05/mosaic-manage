@@ -11,9 +11,17 @@ export default {
     mosaicApiUrl: process.env.MOSAIC_API_URL || '',
   },
 
+  // Which provider generates images: 'huggingface' (free) or 'gemini' (needs billing).
+  imageProvider: process.env.IMAGE_PROVIDER || 'huggingface',
+
   gemini: {
     apiKey: process.env.GOOGLE_GEMINI_API_KEY || '',
     imageModel: process.env.GEMINI_IMAGE_MODEL || '',  // leave blank to use default in service
+  },
+
+  huggingface: {
+    apiKey: process.env.HUGGINGFACE_API_KEY || '',
+    imageModel: process.env.HUGGINGFACE_IMAGE_MODEL || 'black-forest-labs/FLUX.1-schnell',
   },
 
   cors: {

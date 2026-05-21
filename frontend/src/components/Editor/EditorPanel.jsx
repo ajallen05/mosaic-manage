@@ -40,7 +40,8 @@ export default function EditorPanel() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Edit Image</h2>
         <p className="text-gray-500 text-sm mt-1">
-          Use the canvas editor below, or describe changes in the AI prompt bar.
+          Use the canvas editor for text, filters and drawing, or regenerate the
+          image from a new AI prompt.
         </p>
       </div>
 
@@ -53,7 +54,7 @@ export default function EditorPanel() {
         {/* Right sidebar */}
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">AI Prompt Edit</h3>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">AI Regenerate</h3>
             <PromptEditBar onImageUpdated={handleImageUpdated} />
           </div>
 
