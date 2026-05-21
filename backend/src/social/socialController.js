@@ -9,7 +9,7 @@ export const getConnections = asyncWrap(async (req, res) => {
 
 export const instagramAuth = asyncWrap(async (req, res) => {
   const url = socialService.getInstagramAuthUrl(req.user.id);
-  res.redirect(url);
+  res.json({ url });
 });
 
 export const instagramCallback = asyncWrap(async (req, res) => {
@@ -33,7 +33,7 @@ export const disconnectInstagram = asyncWrap(async (req, res) => {
 
 export const linkedinAuth = asyncWrap(async (req, res) => {
   const url = socialService.getLinkedinAuthUrl(req.user.id);
-  res.redirect(url);
+  res.json({ url });
 });
 
 export const linkedinCallback = asyncWrap(async (req, res) => {

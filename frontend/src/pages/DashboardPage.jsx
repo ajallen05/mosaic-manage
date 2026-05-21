@@ -2,26 +2,16 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../components/Layout/DashboardLayout.jsx';
 import useAppStore from '../store/useAppStore.js';
-import { socialApi } from '../api/social.js';
 
 export default function DashboardPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const setConnections = useAppStore(s => s.setConnections);
+  const [searchParams] = useSearchParams();
   const setActiveTab = useAppStore(s => s.setActiveTab);
 
+  // Switch to the social tab when returning from OAuth so that SocialConnections
+  // mounts and can handle the ?connected / ?error params (and show the toast).
   useEffect(() => {
-    const connected = searchParams.get('connected');
-    const error = searchParams.get('error');
-
-    if (connected || error) {
-      if (connected) {
-        setActiveTab('social');
-        socialApi.getConnections()
-          .then(data => setConnections(data.connections))
-          .catch(() => {});
-      }
-      // Clear query params after handling
-      setSearchParams({}, { replace: true });
+    if (searchParams.get('connected') || searchParams.get('error')) {
+      setActiveTab('social');
     }
   }, []);
 

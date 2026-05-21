@@ -14,7 +14,7 @@ export default function SocialConnections() {
   const setConnections = useAppStore(s => s.setConnections);
   const markStepComplete = useAppStore(s => s.markStepComplete);
   const setActiveTab = useAppStore(s => s.setActiveTab);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [toast, setToast] = useState(null);
   const [disconnecting, setDisconnecting] = useState(null);
 
@@ -34,9 +34,11 @@ export default function SocialConnections() {
       setToast({ type: 'success', msg: `${connected.charAt(0).toUpperCase() + connected.slice(1)} connected!` });
       loadConnections();
       markStepComplete('social');
+      setSearchParams({}, { replace: true });
       setTimeout(() => setToast(null), 3500);
     } else if (error) {
       setToast({ type: 'error', msg: `Connection failed: ${error.replace('_', ' ')}` });
+      setSearchParams({}, { replace: true });
       setTimeout(() => setToast(null), 4000);
     }
   }, [searchParams.toString()]);
