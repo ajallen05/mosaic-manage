@@ -4,8 +4,8 @@ export default {
   port: parseInt(process.env.PORT) || 3001,
   nodeEnv: process.env.NODE_ENV || 'development',
 
-  togetherAI: {
-    apiKey: process.env.TOGETHER_AI_API_KEY || '',
+  gemini: {
+    apiKey: process.env.GOOGLE_GEMINI_API_KEY || '',
   },
 
   cors: {

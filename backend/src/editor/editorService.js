@@ -1,33 +1,8 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import config from '../config/index.js';
 import { contentRepository } from '../repositories/contentRepository.js';
 
-const IMAGE_MODEL = 'black-forest-labs/FLUX.1-schnell-Free';
-const API_URL = 'https://api.together.xyz/v1/images/generations';
-
-async function generateImage(prompt) {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${config.togetherAI.apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: IMAGE_MODEL,
-      prompt,
-      width: 1024,
-      height: 1024,
-      steps: 4,
-      n: 1,
-      response_format: 'b64_json',
-    }),
-  });
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Together AI image edit failed: ${detail}`);
-  }
-  const data = await res.json();
-  return data.data[0].b64_json;
-}
+const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
 
 export const editorService = {
   async promptEdit({ userId, imageId, editPrompt }) {
@@ -38,9 +13,25 @@ export const editorService = {
       throw err;
     }
 
-    // Combine original prompt with edit instruction for best results
-    const combinedPrompt = `${record.prompt}. ${editPrompt}`;
-    const base64 = await generateImage(combinedPrompt);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-preview-image-generation' });
+
+    const response = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [
+          { inlineData: { mimeType: record.mimeType, data: record.base64 } },
+          { text: editPrompt },
+        ],
+      }],
+      generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+    });
+
+    const imagePart = response.response.candidates?.[0]?.content.parts.find(p => p.inlineData);
+    if (!imagePart) {
+      const err = new Error('Prompt edit failed: no image returned');
+      err.status = 502;
+      throw err;
+    }
 
     const editHistoryEntry = {
       prompt: editPrompt,
@@ -49,8 +40,8 @@ export const editorService = {
     };
 
     const updated = contentRepository.update(imageId, {
-      base64,
-      mimeType: 'image/jpeg',
+      base64: imagePart.inlineData.data,
+      mimeType: imagePart.inlineData.mimeType || 'image/png',
       editHistory: [...(record.editHistory || []), editHistoryEntry],
     });
 
