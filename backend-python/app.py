@@ -1,4 +1,5 @@
 import traceback
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request
@@ -16,9 +17,18 @@ from editor.editor_router import router as editor_router
 from captions.captions_router import router as captions_router
 from social.social_router import router as social_router
 from publishing.publishing_router import router as publishing_router
+from publishing.scheduler import init_scheduler
 
 
-app = FastAPI(title="mosaic-manage")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print(f"[mosaic-manage] Backend running on http://localhost:{config.port}")
+    print("[mosaic-manage] Using Pollinations AI (no API key required)")
+    init_scheduler()
+    yield
+
+
+app = FastAPI(title="mosaic-manage", lifespan=lifespan)
 
 # Rate limiting
 app.state.limiter = limiter
