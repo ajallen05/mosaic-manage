@@ -17,15 +17,26 @@ export const huggingfaceImageProvider = {
     // HF cold-starts a model on first use and returns 503 with an ETA.
     // Retry once after waiting, then give up with a clear error.
     for (let attempt = 0; attempt < 2; attempt++) {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${config.huggingface.apiKey}`,
-          'Content-Type': 'application/json',
-          Accept: 'image/png',
-        },
-        body: JSON.stringify({ inputs: prompt }),
-      });
+      let res;
+      try {
+        res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${config.huggingface.apiKey}`,
+            'Content-Type': 'application/json',
+            Accept: 'image/png',
+          },
+          body: JSON.stringify({ inputs: prompt }),
+        });
+      } catch (networkErr) {
+        const cause = networkErr.cause?.code || networkErr.cause?.message || networkErr.message;
+        const err = new Error(
+          `Hugging Face request failed (network error: ${cause}). ` +
+          'Check that api-inference.huggingface.co is reachable from your machine.'
+        );
+        err.status = 502;
+        throw err;
+      }
 
       if (res.ok) {
         const buffer = Buffer.from(await res.arrayBuffer());
