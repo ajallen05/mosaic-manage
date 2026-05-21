@@ -11,7 +11,6 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from config import config
 from middleware.rate_limiter import limiter
-from auth.auth_router import router as auth_router
 from generation.generation_router import router as generation_router
 from editor.editor_router import router as editor_router
 from captions.captions_router import router as captions_router
@@ -36,22 +35,17 @@ app.add_middleware(
 )
 
 
-# Convert FastAPI {"detail": ...} to {"error": ...} matching Node.js response shape
+# Use {"error": ...} shape matching Node.js responses
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
 
 
-# Convert Pydantic 422 validation errors to 400 to match Node.js behavior
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=400,
-        content={"error": str(exc.errors())},
-    )
+    return JSONResponse(status_code=400, content={"error": str(exc.errors())})
 
 
-# General unhandled exception handler (equivalent of Express errorHandler)
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     if config.node_env != "production":
@@ -68,12 +62,10 @@ async def health():
     return {
         "status": "ok",
         "service": "mosaic-manage",
-        "authMode": config.auth.mode,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
-app.include_router(auth_router, prefix="/api/v1/auth")
 app.include_router(generation_router, prefix="/api/v1/generate")
 app.include_router(editor_router, prefix="/api/v1/editor")
 app.include_router(captions_router, prefix="/api/v1/captions")

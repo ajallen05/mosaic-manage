@@ -7,7 +7,6 @@ from publishing.scheduler import init_scheduler
 @app.on_event("startup")
 async def startup_event():
     print(f"[mosaic-manage] Backend running on http://localhost:{config.port}")
-    print(f"[mosaic-manage] Auth mode: {config.auth.mode}")
     print(
         f"[mosaic-manage] Gemini API key: "
         f"{'set' if config.gemini_api_key else 'MISSING — set GOOGLE_GEMINI_API_KEY'}"

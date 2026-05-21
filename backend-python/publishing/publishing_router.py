@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timezone
@@ -9,9 +9,10 @@ from publishing.publishing_service import (
     cancel_scheduled,
     get_history,
 )
-from middleware.auth import get_current_user
 
 router = APIRouter()
+
+DEFAULT_USER_ID = 'default'
 
 
 class PublishNowBody(BaseModel):
@@ -30,14 +31,11 @@ class SchedulePostBody(BaseModel):
 
 
 @router.post("/now")
-async def publish_now_route(
-    body: PublishNowBody,
-    current_user: dict = Depends(get_current_user),
-):
+async def publish_now_route(body: PublishNowBody):
     if not body.contentId or not body.platforms:
         raise HTTPException(status_code=400, detail="contentId and platforms[] are required")
     record = await publish_now(
-        user_id=current_user["id"],
+        user_id=DEFAULT_USER_ID,
         content_id=body.contentId,
         platforms=body.platforms,
         caption=body.caption or "",
@@ -47,10 +45,7 @@ async def publish_now_route(
 
 
 @router.post("/schedule", status_code=201)
-async def schedule_post_route(
-    body: SchedulePostBody,
-    current_user: dict = Depends(get_current_user),
-):
+async def schedule_post_route(body: SchedulePostBody):
     if not body.contentId or not body.platforms or not body.scheduledAt:
         raise HTTPException(
             status_code=400, detail="contentId, platforms[], and scheduledAt are required"
@@ -64,7 +59,7 @@ async def schedule_post_route(
     if scheduled_dt <= datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="scheduledAt must be in the future")
     record = schedule_new_post(
-        user_id=current_user["id"],
+        user_id=DEFAULT_USER_ID,
         content_id=body.contentId,
         platforms=body.platforms,
         caption=body.caption or "",
@@ -75,19 +70,16 @@ async def schedule_post_route(
 
 
 @router.get("/scheduled")
-async def get_scheduled_route(current_user: dict = Depends(get_current_user)):
-    return {"posts": get_scheduled(current_user["id"])}
+async def get_scheduled_route():
+    return {"posts": get_scheduled(DEFAULT_USER_ID)}
 
 
 @router.delete("/scheduled/{id}")
-async def cancel_scheduled_route(
-    id: str,
-    current_user: dict = Depends(get_current_user),
-):
-    record = cancel_scheduled(current_user["id"], id)
+async def cancel_scheduled_route(id: str):
+    record = cancel_scheduled(DEFAULT_USER_ID, id)
     return {"record": record}
 
 
 @router.get("/history")
-async def get_history_route(current_user: dict = Depends(get_current_user)):
-    return {"history": get_history(current_user["id"])}
+async def get_history_route():
+    return {"history": get_history(DEFAULT_USER_ID)}

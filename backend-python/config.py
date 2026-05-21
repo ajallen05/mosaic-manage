@@ -4,17 +4,9 @@ import os
 load_dotenv()
 
 
-class AuthConfig:
-    mode: str = os.getenv("AUTH_MODE", "local")
-    jwt_secret: str = os.getenv("JWT_SECRET", "dev_secret_change_in_production")
-    jwt_expires_in: str = os.getenv("JWT_EXPIRES_IN", "7d")
-    mosaic_api_url: str = os.getenv("MOSAIC_API_URL", "")
-
-
 class Config:
     port: int = int(os.getenv("PORT", "3001"))
     node_env: str = os.getenv("NODE_ENV", "development")
-    auth: AuthConfig = AuthConfig()
     gemini_api_key: str = os.getenv("GOOGLE_GEMINI_API_KEY", "")
     cors_origins: list = [
         s.strip()

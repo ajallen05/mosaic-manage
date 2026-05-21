@@ -3,18 +3,6 @@ import { devtools } from 'zustand/middleware';
 
 const useAppStore = create(devtools(
   (set, get) => ({
-    // --- Auth ---
-    user: null,
-    token: null,
-    setAuth: (user, token) => {
-      localStorage.setItem('mosaic_token', token);
-      set({ user, token });
-    },
-    clearAuth: () => {
-      localStorage.removeItem('mosaic_token');
-      set({ user: null, token: null });
-    },
-
     // --- Flow ---
     activeTab: 'generate',
     setActiveTab: (tab) => set({ activeTab: tab }),

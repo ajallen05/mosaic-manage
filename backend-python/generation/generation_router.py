@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional
 from generation.generation_service import generation_service
-from middleware.auth import get_current_user
 from middleware.rate_limiter import limiter, GENERATION_LIMIT
 
 router = APIRouter()
+
+DEFAULT_USER_ID = 'default'
 
 
 class GenerateImagesBody(BaseModel):
@@ -20,15 +21,11 @@ class RegenerateImageBody(BaseModel):
 
 @router.post("/images", status_code=201)
 @limiter.limit(GENERATION_LIMIT)
-async def generate_images(
-    request: Request,
-    body: GenerateImagesBody,
-    current_user: dict = Depends(get_current_user),
-):
+async def generate_images(request: Request, body: GenerateImagesBody):
     if not body.prompt or not body.prompt.strip():
         raise HTTPException(status_code=400, detail="prompt is required")
     images = await generation_service.generate_images(
-        user_id=current_user["id"],
+        user_id=DEFAULT_USER_ID,
         prompt=body.prompt.strip(),
         count=body.count,
     )
@@ -37,15 +34,11 @@ async def generate_images(
 
 @router.post("/regenerate")
 @limiter.limit(GENERATION_LIMIT)
-async def regenerate_image(
-    request: Request,
-    body: RegenerateImageBody,
-    current_user: dict = Depends(get_current_user),
-):
+async def regenerate_image(request: Request, body: RegenerateImageBody):
     if not body.imageId or not body.prompt or not body.prompt.strip():
         raise HTTPException(status_code=400, detail="imageId and prompt are required")
     image = await generation_service.regenerate_image(
-        user_id=current_user["id"],
+        user_id=DEFAULT_USER_ID,
         image_id=body.imageId,
         prompt=body.prompt.strip(),
     )
@@ -53,6 +46,6 @@ async def regenerate_image(
 
 
 @router.get("/history")
-async def get_history(current_user: dict = Depends(get_current_user)):
-    history = generation_service.get_history(current_user["id"])
+async def get_history():
+    history = generation_service.get_history(DEFAULT_USER_ID)
     return {"history": history}

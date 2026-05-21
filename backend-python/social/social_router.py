@@ -1,21 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
 from typing import Optional
 from social.social_service import social_service
-from middleware.auth import get_current_user
 from config import config
 
 router = APIRouter()
 
+DEFAULT_USER_ID = 'default'
+
 
 @router.get("/connections")
-async def get_connections(current_user: dict = Depends(get_current_user)):
-    return {"connections": social_service.get_connections(current_user["id"])}
+async def get_connections():
+    return {"connections": social_service.get_connections(DEFAULT_USER_ID)}
 
 
 @router.get("/instagram/auth")
-async def instagram_auth(current_user: dict = Depends(get_current_user)):
-    url = social_service.get_instagram_auth_url(current_user["id"])
+async def instagram_auth():
+    url = social_service.get_instagram_auth_url(DEFAULT_USER_ID)
     return RedirectResponse(url=url)
 
 
@@ -36,14 +37,14 @@ async def instagram_callback(
 
 
 @router.delete("/instagram")
-async def disconnect_instagram(current_user: dict = Depends(get_current_user)):
-    social_service.disconnect_instagram(current_user["id"])
+async def disconnect_instagram():
+    social_service.disconnect_instagram(DEFAULT_USER_ID)
     return {"success": True}
 
 
 @router.get("/linkedin/auth")
-async def linkedin_auth(current_user: dict = Depends(get_current_user)):
-    url = social_service.get_linkedin_auth_url(current_user["id"])
+async def linkedin_auth():
+    url = social_service.get_linkedin_auth_url(DEFAULT_USER_ID)
     return RedirectResponse(url=url)
 
 
@@ -64,6 +65,6 @@ async def linkedin_callback(
 
 
 @router.delete("/linkedin")
-async def disconnect_linkedin(current_user: dict = Depends(get_current_user)):
-    social_service.disconnect_linkedin(current_user["id"])
+async def disconnect_linkedin():
+    social_service.disconnect_linkedin(DEFAULT_USER_ID)
     return {"success": True}

@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.js';
 import {
   publishNow,
   schedulePost,
@@ -9,7 +8,6 @@ import {
 } from './publishingController.js';
 
 const router = Router();
-router.use(authenticate);
 
 router.post('/now', publishNow);
 router.post('/schedule', schedulePost);

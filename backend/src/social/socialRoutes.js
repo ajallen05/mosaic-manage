@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.js';
 import {
   getConnections,
   instagramAuth,
@@ -12,12 +11,12 @@ import {
 
 const router = Router();
 
-router.get('/connections', authenticate, getConnections);
-router.get('/instagram/auth', authenticate, instagramAuth);
-router.get('/instagram/callback', instagramCallback);     // no authenticate — browser redirect from OAuth
-router.delete('/instagram', authenticate, disconnectInstagram);
-router.get('/linkedin/auth', authenticate, linkedinAuth);
-router.get('/linkedin/callback', linkedinCallback);       // no authenticate — browser redirect from OAuth
-router.delete('/linkedin', authenticate, disconnectLinkedin);
+router.get('/connections', getConnections);
+router.get('/instagram/auth', instagramAuth);
+router.get('/instagram/callback', instagramCallback);
+router.delete('/instagram', disconnectInstagram);
+router.get('/linkedin/auth', linkedinAuth);
+router.get('/linkedin/callback', linkedinCallback);
+router.delete('/linkedin', disconnectLinkedin);
 
 export default router;
