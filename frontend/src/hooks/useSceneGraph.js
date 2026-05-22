@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { FabricImage, IText, Rect, Gradient } from 'fabric';
+
+const uuidv4 = () => crypto.randomUUID();
 import { PLATFORM_PROFILES, getDisplaySize } from '../lib/platformProfiles.js';
 import { loadGoogleFont } from '../lib/googleFonts.js';
 
