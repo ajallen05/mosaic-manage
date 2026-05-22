@@ -86,7 +86,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
   useEffect(() => {
     if (!transformerRef.current || !stageRef.current) return;
     if (selectedId && selectedId !== editingTextId) {
-      const node = stageRef.current.findOne(`#${CSS.escape(selectedId)}`);
+      const node = stageRef.current.findOne(`#${selectedId}`);
       if (node) {
         transformerRef.current.nodes([node]);
         transformerRef.current.getLayer()?.batchDraw();
@@ -155,6 +155,13 @@ export default function KonvaCanvas({ onImageUpdated }) {
 
   const toggleVisibility = useCallback((id) => {
     setNodes(prev => prev.map(n => n.id === id ? { ...n, visible: !n.visible } : n));
+  }, []);
+
+  // ── Font loader (triggers stage redraw after font is ready) ──────────────
+
+  const handleFontLoad = useCallback(async (name) => {
+    await loadGoogleFont(name);
+    stageRef.current?.batchDraw();
   }, []);
 
   // ── Add Text ─────────────────────────────────────────────────────────────
@@ -256,7 +263,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
   const startTextEdit = useCallback((node) => {
     const stage = stageRef.current;
     if (!stage) return;
-    const konvaNode = stage.findOne(`#${CSS.escape(node.id)}`);
+    const konvaNode = stage.findOne(`#${node.id}`);
     if (!konvaNode) return;
 
     setEditingTextId(node.id);
@@ -564,7 +571,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
 
         {/* Text toolbar */}
         {selectedNode?.type === 'text' && (
-          <TextToolbar node={selectedNode} onUpdate={updateNode} onFontLoad={loadGoogleFont} />
+          <TextToolbar node={selectedNode} onUpdate={updateNode} onFontLoad={handleFontLoad} />
         )}
 
         {/* Konva Stage */}

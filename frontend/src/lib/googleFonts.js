@@ -22,8 +22,9 @@ export const GOOGLE_FONTS = [
 ];
 
 const loaded = new Set();
+const FONT_WEIGHT_MAP = Object.fromEntries(GOOGLE_FONTS.map(f => [f.name, f.weights]));
 
-export async function loadGoogleFont(name, weights = ['400', '700']) {
+export async function loadGoogleFont(name) {
   if (loaded.has(name)) return;
   const id = `gfont-${name.replace(/\s+/g, '-')}`;
   if (!document.getElementById(id)) {
@@ -31,12 +32,12 @@ export async function loadGoogleFont(name, weights = ['400', '700']) {
     link.id = id;
     link.rel = 'stylesheet';
     const family = name.replace(/ /g, '+');
-    const wghts = weights.join(';');
-    link.href = `https://fonts.googleapis.com/css2?family=${family}:wght@${wghts}&display=swap`;
+    const weights = FONT_WEIGHT_MAP[name] || ['400', '700'];
+    link.href = `https://fonts.googleapis.com/css2?family=${family}:wght@${weights.join(';')}&display=swap`;
     document.head.appendChild(link);
   }
   try {
-    await document.fonts.load(`16px "${name}"`);
+    await document.fonts.load(`400 16px "${name}"`);
   } catch {
     // continue even if font check fails
   }
