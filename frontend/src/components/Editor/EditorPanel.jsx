@@ -36,33 +36,33 @@ export default function EditorPanel() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
+    <div className="max-w-full mx-auto">
+      <div className="mb-5">
         <h2 className="text-2xl font-bold text-gray-900">Edit Image</h2>
         <p className="text-gray-500 text-sm mt-1">
-          Use the canvas editor below, or describe changes in the AI prompt bar.
+          Compose layers, add text with Google Fonts, pick a platform, then export or save.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
-        {/* Canvas */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+      <div className="flex gap-4 items-start">
+        {/* Canvas area (takes most space) */}
+        <div className="flex-1 min-w-0 bg-white rounded-2xl border border-gray-200 p-4">
           <FabricCanvas onImageUpdated={handleImageUpdated} />
         </div>
 
         {/* Right sidebar */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        <div className="w-72 shrink-0 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">AI Prompt Edit</h3>
             <PromptEditBar onImageUpdated={handleImageUpdated} />
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">Current image</h3>
+          <div className="bg-white rounded-2xl border border-gray-200 p-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-2">Current image</h3>
             <img
               src={`data:${selectedImage.mimeType || 'image/png'};base64,${selectedImage.base64}`}
               alt="Selected"
-              className="w-full rounded-lg border border-gray-100"
+              className="w-full rounded-lg border border-gray-100 object-contain"
             />
             <p className="text-xs text-gray-400 mt-2 truncate">{selectedImage.prompt}</p>
           </div>
