@@ -305,12 +305,24 @@ export default function KonvaCanvas({ onImageUpdated }) {
 
   const handleTransformEnd = useCallback((id, e) => {
     const t = e.target;
-    updateNode(id, {
-      x: t.x(), y: t.y(),
-      scaleX: t.scaleX(), scaleY: t.scaleY(),
-      rotation: t.rotation(),
-    });
-  }, [updateNode]);
+    const isText = t.getClassName() === 'Text';
+    if (isText) {
+      // For text: absorb scale into width/height so text wrap stays correct
+      const currentScaleX = t.scaleX();
+      const currentScaleY = t.scaleY();
+      t.scaleX(1);
+      t.scaleY(1);
+      setNodes(prev => prev.map(n => {
+        if (n.id !== id) return n;
+        const newW = Math.max(20, (n.width ?? 200) * currentScaleX);
+        const newH = Math.max(20, (n.height ?? 200) * currentScaleY);
+        return { ...n, x: t.x(), y: t.y(), width: newW, height: newH, rotation: t.rotation(), scaleX: 1, scaleY: 1 };
+      }));
+      t.getLayer()?.batchDraw();
+    } else {
+      updateNode(id, { x: t.x(), y: t.y(), scaleX: t.scaleX(), scaleY: t.scaleY(), rotation: t.rotation() });
+    }
+  }, [updateNode, setNodes]);
 
   // ── Export ────────────────────────────────────────────────────────────────
 
@@ -367,6 +379,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
     draggable: node.draggable && node.id !== editingTextId,
     onClick: () => { if (node.id !== editingTextId) setSelectedId(node.id); },
     onTap: () => { if (node.id !== editingTextId) setSelectedId(node.id); },
+    onDragStart: () => { if (node.id !== editingTextId) setSelectedId(node.id); },
     onDragEnd: (e) => handleDragEnd(node.id, e),
     onTransformEnd: (e) => handleTransformEnd(node.id, e),
     listening: node.visible,
@@ -405,6 +418,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
           fill={node.fill}
           align={node.align}
           width={node.width}
+          height={node.height ?? 200}
           scaleX={node.scaleX ?? 1}
           scaleY={node.scaleY ?? 1}
           wrap="word"
@@ -583,7 +597,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
         {/* Konva Stage */}
         <div
           className="rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-gray-900"
-          style={{ width: displayW, maxWidth: '100%' }}
+          style={{ width: displayW, maxWidth: '100%', touchAction: 'none' }}
           onClick={() => setShowShapeMenu(false)}
         >
           <Stage
