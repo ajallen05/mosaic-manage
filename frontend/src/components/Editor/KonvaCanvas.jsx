@@ -359,7 +359,6 @@ export default function KonvaCanvas({ onImageUpdated }) {
   // ── Render nodes ──────────────────────────────────────────────────────────
 
   const commonProps = (node) => ({
-    key: node.id,
     id: node.id,
     x: node.x,
     y: node.y,
@@ -378,6 +377,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
       const isBase = node.id === 'base';
       return (
         <KonvaImage
+          key={node.id}
           {...commonProps(node)}
           ref={isBase ? baseImageRef : undefined}
           image={node.imageEl}
@@ -393,6 +393,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
       const isEditing = node.id === editingTextId;
       return (
         <KonvaText
+          key={node.id}
           {...commonProps(node)}
           text={isEditing ? '' : node.text}
           fontFamily={node.fontFamily}
@@ -404,6 +405,8 @@ export default function KonvaCanvas({ onImageUpdated }) {
           fill={node.fill}
           align={node.align}
           width={node.width}
+          scaleX={node.scaleX ?? 1}
+          scaleY={node.scaleY ?? 1}
           wrap="word"
           onDblClick={() => startTextEdit(node)}
           onDblTap={() => startTextEdit(node)}
@@ -414,6 +417,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
     if (node.type === 'rect') {
       return (
         <KonvaRect
+          key={node.id}
           {...commonProps(node)}
           width={node.width}
           height={node.height}
@@ -428,6 +432,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
     if (node.type === 'circle') {
       return (
         <KonvaCircle
+          key={node.id}
           {...commonProps(node)}
           radius={node.width / 2}
           fill={node.fill}
@@ -441,6 +446,7 @@ export default function KonvaCanvas({ onImageUpdated }) {
       const stops = node.colors.flatMap((c, i, arr) => [i / (arr.length - 1), c]);
       return (
         <KonvaRect
+          key={node.id}
           {...commonProps(node)}
           width={node.width}
           height={node.height}
