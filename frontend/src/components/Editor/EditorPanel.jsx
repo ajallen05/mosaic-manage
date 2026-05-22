@@ -1,5 +1,5 @@
 import { ImageOff } from 'lucide-react';
-import FabricCanvas from './FabricCanvas.jsx';
+import KonvaCanvas from './KonvaCanvas.jsx';
 import PromptEditBar from './PromptEditBar.jsx';
 import useAppStore from '../../store/useAppStore.js';
 
@@ -47,7 +47,7 @@ export default function EditorPanel() {
       <div className="flex gap-4 items-start">
         {/* Canvas area (takes most space) */}
         <div className="flex-1 min-w-0 bg-white rounded-2xl border border-gray-200 p-4">
-          <FabricCanvas onImageUpdated={handleImageUpdated} />
+          <KonvaCanvas onImageUpdated={handleImageUpdated} />
         </div>
 
         {/* Right sidebar */}
